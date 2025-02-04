@@ -68,11 +68,51 @@ def register():
 
     return render_template('register.html')
 
+#USERS
 @app.route('/users', methods=['GET'])
-def get_user():
+def users():
 
     users = mongo.db.users.find()
     return render_template('users.html', users=users)
+
+@app.route('/edit/<user_id>', methods=['GET'])
+def edit(user_id):
+    
+    user_id = ObjectId(user_id)
+
+    user = mongo.db.users.find_one({'_id': user_id})
+
+    if user:
+        return render_template('edit_user.html', user=user)
+    else:
+        flash('Usuario no encontrado.')
+        return redirect(url_for('users'))
+
+@app.route('/delete/<user_id>', methods=['POST'])
+def delete_user(user_id):
+
+    user_id = ObjectId(user_id)
+
+    mongo.db.users.delete_one({'_id': user_id})
+
+    return redirect(url_for('users'))
+
+@app.route('/update/<user_id>', methods=['POST'])
+def update_user(user_id):
+    name = request.form.get('name')
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    hashed_password = generate_password_hash(password)
+
+    mongo.db.users.update_one(
+        {'_id': ObjectId(user_id)},
+        {'$set': {'name': name, 'username': username, 'password': hashed_password}}
+    )
+
+    flash('Usuario actualizado correctamente.')
+    return redirect(url_for('users'))  
+
 
 @app.route('/perfil/<user_id>', methods=['GET'])
 def perfil(user_id):
