@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, Response, render_template, flash, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_pymongo import PyMongo
 from bson import json_util, ObjectId
 import os
@@ -16,25 +17,24 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
 
-        if not username or not password:
-            flash('Todos los campos son obligatorios.')
-
-        user = mongo.db.users.find_one({"username": username, "password": password})
+        user = mongo.db.users.find_one({"username": username})
 
         if user:
-            if user['password'] == password:
+            if check_password_hash(user['password'], password):
                 return redirect(url_for('perfil', user_id=user['_id']))
             else:
-                return 'Usuario no encontrado', 404
+                flash("Contraseña incorrecta.")
+                return redirect(url_for('login'))
         else:
-            return 'Usuario no encontrado, 404'
+            flash("Usuario no encontrado.")
+            return redirect(url_for('login'))
 
     return render_template('login.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -55,10 +55,12 @@ def register():
             flash('El usuario ya existe.')
             return redirect(url_for('register'))
 
+        hashed_password = generate_password_hash(password)
+
         mongo.db.users.insert_one({
             "name": name,
             "username": username,
-            "password": password
+            "password": hashed_password
         })
 
         flash('Usuario registrado correctamente.')
