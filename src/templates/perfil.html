@@ -1,0 +1,12 @@
+{% extends './layout.html' %}
+{% block body %}
+<body>
+    <h1>Bienvenido {{ user.username }}</h1>
+    <ul>
+        <li>Name: {{ user.name }}</li>
+        <li>Username: {{ user.username }}</li>
+        <li>Password: {{ user.password }}</li>
+    </ul>
+    <a href="{{ url_for('login') }}">Logout</a>
+</body>
+{% endblock %}
